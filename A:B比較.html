@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<title>博客來｜智慧書籍顧問 Agent Demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+:root{
+  --green-main:#2E7D32;
+  --green-light:#E8F5E9;
+  --green-accent:#43A047;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;
+  background:linear-gradient(180deg,#eaf6ee,#f7f9fa);
+}
+header{
+  background:var(--green-main);
+  color:#fff;
+  padding:18px;
+  text-align:center;
+  font-size:18px;
+  font-weight:600;
+}
+.container{
+  max-width:1200px;
+  margin:24px auto;
+  padding:0 20px;
+}
+.chat-panel{
+  background:#fff;
+  border-radius:16px;
+  box-shadow:0 8px 24px rgba(0,0,0,.1);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  height:85vh;
+}
+.chat-area{
+  flex:1;
+  padding:24px;
+  overflow-y:auto;
+}
+.welcome{
+  text-align:center;
+  padding:60px 20px;
+  color:#6b7280;
+}
+.welcome h2{
+  color:var(--green-main);
+  margin-bottom:12px;
+}
+.msg{
+  margin-bottom:18px;
+  display:flex;
+  opacity:0;
+  transform:translateY(10px);
+  animation:fadeIn 0.3s ease forwards;
+}
+@keyframes fadeIn{
+  to{opacity:1;transform:translateY(0)}
+}
+.msg.user{justify-content:flex-end}
+.bubble{
+  max-width:85%;
+  padding:14px 18px;
+  border-radius:16px;
+  line-height:1.8;
+  font-size:14px;
+}
+.msg.user .bubble{
+  background:var(--green-accent);
+  color:#fff;
+  border-radius:16px 16px 4px 16px;
+}
+.msg.agent .bubble{
+  background:var(--green-light);
+  color:#1b5e20;
+  border-radius:16px 16px 16px 4px;
+}
+.typing-cursor{
+  display:inline-block;
+  width:2px;
+  height:1em;
+  background:var(--green-main);
+  margin-left:2px;
+  animation:blink 0.7s infinite;
+  vertical-align:text-bottom;
+}
+@keyframes blink{
+  0%,50%{opacity:1}
+  51%,100%{opacity:0}
+}
+.compare-section{
+  padding:20px 0;
+  display:none;
+}
+.section-title{
+  font-weight:600;
+  color:var(--green-main);
+  margin-bottom:16px;
+  font-size:16px;
+  opacity:0;
+  transform:translateY(10px);
+  transition:all 0.4s ease;
+}
+.section-title.show{
+  opacity:1;
+  transform:translateY(0);
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:14px;
+  background:#fff;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 4px 12px rgba(0,0,0,.06);
+  opacity:0;
+  transform:translateY(20px);
+  transition:all 0.5s ease;
+}
+table.show{
+  opacity:1;
+  transform:translateY(0);
+}
+th,td{
+  border:1px solid #e5e7eb;
+  padding:14px 16px;
+  text-align:left;
+}
+th{
+  background:var(--green-main);
+  color:#fff;
+  font-weight:500;
+}
+th:first-child{
+  background:var(--green-light);
+  color:var(--green-main);
+}
+tr:nth-child(even){
+  background:#fafafa;
+}
+.verdict{
+  margin-top:20px;
+  padding:16px 20px;
+  background:linear-gradient(135deg,#e8f5e9,#c8e6c9);
+  border-radius:12px;
+  border-left:4px solid var(--green-main);
+  opacity:0;
+  transform:translateY(20px);
+  transition:all 0.5s ease;
+}
+.verdict.show{
+  opacity:1;
+  transform:translateY(0);
+}
+.verdict-title{
+  font-weight:600;
+  color:var(--green-main);
+  margin-bottom:8px;
+}
+.verdict-content{
+  line-height:1.7;
+  font-size:14px;
+}
+.cta-section{
+  padding:20px 0;
+  display:none;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.cta-btn{
+  padding:12px 20px;
+  border-radius:10px;
+  border:none;
+  cursor:pointer;
+  font-size:14px;
+  transition:all 0.2s;
+  opacity:0;
+  transform:translateY(10px);
+}
+.cta-btn.show{
+  opacity:1;
+  transform:translateY(0);
+}
+.cta-btn.primary{
+  background:var(--green-main);
+  color:#fff;
+}
+.cta-btn.primary:hover{
+  background:#1b5e20;
+}
+.cta-btn.secondary{
+  background:var(--green-light);
+  color:var(--green-main);
+}
+.cta-btn.secondary:hover{
+  background:#c8e6c9;
+}
+.input-area{
+  border-top:1px solid #e5e7eb;
+  padding:14px;
+  display:flex;
+  gap:10px;
+  flex-shrink:0;
+}
+.input-area input{
+  flex:1;
+  padding:12px 14px;
+  border-radius:10px;
+  border:1px solid #d1d5db;
+  font-size:14px;
+}
+.input-area input:focus{
+  outline:none;
+  border-color:var(--green-main);
+}
+.input-area button{
+  background:var(--green-main);
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  padding:0 18px;
+  cursor:pointer;
+  font-size:14px;
+  transition:background 0.2s;
+}
+.input-area button:hover{
+  background:#1b5e20;
+}
+.input-area button:disabled{
+  background:#9e9e9e;
+  cursor:not-allowed;
+}
+</style>
+</head>
+<body>
+
+<header>📗 博客來｜智慧書籍顧問（A/B 比較展示）</header>
+
+<div class="container">
+  <div class="chat-panel">
+    <div class="chat-area" id="chatArea">
+      <div class="welcome" id="welcome">
+        <h2>書籍比較助手</h2>
+        <p>試試問我：「底層邏輯和刻意練習這兩本有啥差別？」</p>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="想比較哪兩本書？例如：原子習慣 vs 複利效應" />
+      <button id="sendBtn" onclick="handleSend()">送出</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const chatArea = document.getElementById('chatArea');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const welcome = document.getElementById('welcome');
+
+const agentResponse = `這兩本書都在探討「如何讓自己變得更好」，但切入角度完全不同：
+
+《底層邏輯》著重在思維框架——幫你建立看世界的方式，理解事物運作的本質規律。讀完後，你會更懂得「為什麼」。
+
+《刻意練習》著重在行為方法——告訴你如何透過系統化訓練，把任何技能練到專家等級。讀完後，你會更懂得「怎麼做」。
+
+簡單說：一本教你思考，一本教你行動。`;
+
+const verdictText = `如果你現在有明確想學的技能（如程式、樂器、語言），建議先讀《刻意練習》；如果你想提升整體的思考與判斷能力，《底層邏輯》會是更好的起點。
+
+當然，兩本一起讀效果最好——先用底層邏輯理解「為什麼」，再用刻意練習執行「怎麼做」。`;
+
+const compareSectionHTML = `
+<div class="compare-section" id="compareSection">
+  <div class="section-title" id="tableTitle">⚖️ 詳細比較表</div>
+  <table id="compareTable">
+    <tr>
+      <th>比較面向</th>
+      <th>《底層邏輯》</th>
+      <th>《刻意練習》</th>
+    </tr>
+    <tr>
+      <td><b>核心主題</b></td>
+      <td>萬變中的不變——找出事物的本質規律</td>
+      <td>專家是如何煉成的——系統化技能養成</td>
+    </tr>
+    <tr>
+      <td><b>作者背景</b></td>
+      <td>劉潤（商業顧問）</td>
+      <td>Anders Ericsson（心理學家）</td>
+    </tr>
+    <tr>
+      <td><b>閱讀難度</b></td>
+      <td>中等（概念較抽象）</td>
+      <td>中等（案例豐富易讀）</td>
+    </tr>
+    <tr>
+      <td><b>實用程度</b></td>
+      <td>培養思維，長期受益</td>
+      <td>可立即應用於技能學習</td>
+    </tr>
+    <tr>
+      <td><b>適合對象</b></td>
+      <td>想提升決策與判斷力的人</td>
+      <td>想快速精通特定技能的人</td>
+    </tr>
+    <tr>
+      <td><b>閱讀時間</b></td>
+      <td>約 4-5 小時</td>
+      <td>約 5-6 小時</td>
+    </tr>
+  </table>
+
+  <div class="verdict" id="verdict">
+    <div class="verdict-title">💡 Agent 建議</div>
+    <div class="verdict-content" id="verdictContent"></div>
+  </div>
+</div>
+
+<div class="cta-section" id="ctaSection">
+  <button class="cta-btn primary" id="cta1" onclick="location.href='瀏覽記錄推薦.html'">看更多推薦</button>
+  <button class="cta-btn secondary" id="cta2">加入購物車：底層邏輯</button>
+  <button class="cta-btn secondary" id="cta3">加入購物車：刻意練習</button>
+</div>`;
+
+let isProcessing = false;
+
+userInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter' && !isProcessing) handleSend();
+});
+
+function handleSend() {
+  const text = userInput.value.trim();
+  if (!text || isProcessing) return;
+
+  isProcessing = true;
+  sendBtn.disabled = true;
+
+  if (welcome) welcome.style.display = 'none';
+
+  addMessage(text, 'user');
+  userInput.value = '';
+
+  setTimeout(() => {
+    streamMessage(agentResponse, () => {
+      showComparison();
+    });
+  }, 600);
+}
+
+function addMessage(text, type) {
+  const msg = document.createElement('div');
+  msg.className = `msg ${type}`;
+  msg.innerHTML = `<div class="bubble">${text.replace(/\n/g, '<br>')}</div>`;
+  chatArea.appendChild(msg);
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function streamMessage(text, callback) {
+  const msg = document.createElement('div');
+  msg.className = 'msg agent';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  msg.appendChild(bubble);
+  chatArea.appendChild(msg);
+
+  let index = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'typing-cursor';
+
+  function type() {
+    if (index < text.length) {
+      const char = text[index];
+      if (char === '\n') {
+        bubble.innerHTML = bubble.innerHTML.replace(/<span class="typing-cursor"><\/span>$/, '');
+        bubble.innerHTML += '<br>';
+      } else {
+        bubble.innerHTML = bubble.innerHTML.replace(/<span class="typing-cursor"><\/span>$/, '');
+        bubble.innerHTML += char;
+      }
+      bubble.appendChild(cursor);
+      index++;
+      chatArea.scrollTop = chatArea.scrollHeight;
+
+      const delay = char === '。' || char === '，' || char === '：' || char === '？' ? 80 :
+                    char === '\n' ? 150 :
+                    Math.random() * 20 + 15;
+      setTimeout(type, delay);
+    } else {
+      cursor.remove();
+      if (callback) callback();
+    }
+  }
+
+  bubble.appendChild(cursor);
+  setTimeout(type, 300);
+}
+
+function showComparison() {
+  // Insert compare section into chat area
+  chatArea.insertAdjacentHTML('beforeend', compareSectionHTML);
+
+  const compareSection = document.getElementById('compareSection');
+  compareSection.style.display = 'block';
+
+  setTimeout(() => {
+    document.getElementById('tableTitle').classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 100);
+
+  setTimeout(() => {
+    document.getElementById('compareTable').classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 300);
+
+  setTimeout(() => {
+    const verdict = document.getElementById('verdict');
+    verdict.classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+    streamVerdict();
+  }, 800);
+}
+
+function streamVerdict() {
+  const verdictContent = document.getElementById('verdictContent');
+  let index = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'typing-cursor';
+
+  function type() {
+    if (index < verdictText.length) {
+      const char = verdictText[index];
+      if (char === '\n') {
+        verdictContent.innerHTML = verdictContent.innerHTML.replace(/<span class="typing-cursor"><\/span>$/, '');
+        verdictContent.innerHTML += '<br>';
+      } else {
+        verdictContent.innerHTML = verdictContent.innerHTML.replace(/<span class="typing-cursor"><\/span>$/, '');
+        verdictContent.innerHTML += char;
+      }
+      verdictContent.appendChild(cursor);
+      index++;
+      chatArea.scrollTop = chatArea.scrollHeight;
+
+      const delay = char === '。' || char === '，' || char === '；' ? 60 :
+                    char === '\n' ? 120 :
+                    Math.random() * 15 + 10;
+      setTimeout(type, delay);
+    } else {
+      cursor.remove();
+      showCTA();
+    }
+  }
+
+  verdictContent.appendChild(cursor);
+  setTimeout(type, 200);
+}
+
+function showCTA() {
+  const ctaSection = document.getElementById('ctaSection');
+  ctaSection.style.display = 'flex';
+  setTimeout(() => {
+    document.getElementById('cta1').classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 100);
+  setTimeout(() => {
+    document.getElementById('cta2').classList.add('show');
+  }, 200);
+  setTimeout(() => {
+    document.getElementById('cta3').classList.add('show');
+  }, 300);
+  setTimeout(() => {
+    isProcessing = false;
+    sendBtn.disabled = false;
+  }, 400);
+}
+</script>
+
+</body>
+</html>

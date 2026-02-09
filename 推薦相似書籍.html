@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<title>博客來｜智慧書籍顧問 Agent Demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+:root{
+  --green-main:#2E7D32;
+  --green-light:#E8F5E9;
+  --green-accent:#43A047;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;
+  background:linear-gradient(180deg,#eaf6ee,#f7f9fa);
+}
+header{
+  background:var(--green-main);
+  color:#fff;
+  padding:18px;
+  text-align:center;
+  font-size:18px;
+  font-weight:600;
+}
+.container{
+  max-width:1200px;
+  margin:24px auto;
+  padding:0 20px;
+}
+.chat-panel{
+  background:#fff;
+  border-radius:16px;
+  box-shadow:0 8px 24px rgba(0,0,0,.1);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  height:85vh;
+}
+.chat-area{
+  flex:1;
+  padding:24px;
+  overflow-y:auto;
+}
+.welcome{
+  text-align:center;
+  padding:60px 20px;
+  color:#6b7280;
+}
+.welcome h2{
+  color:var(--green-main);
+  margin-bottom:12px;
+}
+.msg{
+  margin-bottom:18px;
+  display:flex;
+  opacity:0;
+  transform:translateY(10px);
+  animation:fadeIn 0.3s ease forwards;
+}
+@keyframes fadeIn{
+  to{opacity:1;transform:translateY(0)}
+}
+.msg.user{justify-content:flex-end}
+.bubble{
+  max-width:75%;
+  padding:14px 18px;
+  border-radius:16px;
+  line-height:1.7;
+  font-size:14px;
+}
+.msg.user .bubble{
+  background:var(--green-accent);
+  color:#fff;
+  border-radius:16px 16px 4px 16px;
+}
+.msg.agent .bubble{
+  background:var(--green-light);
+  color:#1b5e20;
+  border-radius:16px 16px 16px 4px;
+}
+.typing-cursor{
+  display:inline-block;
+  width:2px;
+  height:1em;
+  background:var(--green-main);
+  margin-left:2px;
+  animation:blink 0.7s infinite;
+  vertical-align:text-bottom;
+}
+@keyframes blink{
+  0%,50%{opacity:1}
+  51%,100%{opacity:0}
+}
+.book-section{
+  padding:20px 0;
+  display:none;
+}
+.book-title{
+  font-weight:600;
+  color:var(--green-main);
+  margin-bottom:16px;
+}
+.book-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:18px;
+}
+.book-card{
+  background:#fff;
+  border-radius:14px;
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  opacity:0;
+  transform:translateY(20px);
+  transition:all 0.4s ease;
+  border:2px solid #e5e7eb;
+  cursor:grab;
+}
+.book-card.show{
+  opacity:1;
+  transform:translateY(0);
+}
+.book-card.dragging{
+  opacity:0.5;
+  cursor:grabbing;
+}
+.book-card.selected{
+  border-color:var(--green-main);
+  background:var(--green-light);
+}
+.book-card h4{
+  margin:0;
+  font-size:16px;
+  color:#2e7d32;
+}
+.book-card .author{
+  font-size:13px;
+  color:#6b7280;
+}
+.book-card .desc{
+  font-size:13px;
+  line-height:1.5;
+}
+.book-actions{
+  margin-top:auto;
+  display:flex;
+  gap:8px;
+}
+.book-actions button{
+  flex:1;
+  border:none;
+  border-radius:8px;
+  padding:8px;
+  background:var(--green-light);
+  color:var(--green-main);
+  cursor:pointer;
+  font-size:13px;
+  transition:all 0.2s;
+}
+.book-actions button:hover{
+  background:#c8e6c9;
+}
+.book-actions button.added{
+  background:var(--green-main);
+  color:#fff;
+}
+
+/* Compare Section - Inline */
+.compare-section{
+  margin-top:24px;
+  padding:20px;
+  background:linear-gradient(135deg,#f8fdf9,#e8f5e9);
+  border-radius:16px;
+  border:2px solid var(--green-light);
+  display:none;
+}
+.compare-section.show{
+  display:block;
+}
+
+/* Compare Result Section */
+.compare-result{
+  margin-top:24px;
+  display:none;
+}
+.compare-result.show{
+  display:block;
+}
+.result-bubble{
+  background:var(--green-light);
+  color:#1b5e20;
+  padding:20px 24px;
+  border-radius:16px;
+  line-height:1.8;
+  font-size:14px;
+  margin-bottom:24px;
+}
+.result-table-section{
+  opacity:0;
+  transform:translateY(20px);
+  transition:all 0.5s ease;
+}
+.result-table-section.show{
+  opacity:1;
+  transform:translateY(0);
+}
+.result-table-title{
+  font-weight:600;
+  color:var(--green-main);
+  margin-bottom:16px;
+  font-size:16px;
+}
+.result-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:14px;
+  background:#fff;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 4px 12px rgba(0,0,0,.06);
+}
+.result-table th,
+.result-table td{
+  border:1px solid #e5e7eb;
+  padding:14px 16px;
+  text-align:left;
+}
+.result-table th{
+  background:var(--green-main);
+  color:#fff;
+  font-weight:500;
+}
+.result-table th:first-child{
+  background:var(--green-light);
+  color:var(--green-main);
+  width:100px;
+}
+.result-table tr:nth-child(even){
+  background:#fafafa;
+}
+.result-table td:first-child{
+  font-weight:600;
+  color:#374151;
+}
+
+/* Browsing History Section */
+.history-section{
+  margin-top:24px;
+  display:none;
+}
+.history-section.show{
+  display:block;
+}
+.history-title{
+  font-weight:600;
+  color:var(--green-main);
+  margin-bottom:12px;
+  font-size:15px;
+  opacity:0;
+  transform:translateY(10px);
+  transition:all 0.4s ease;
+}
+.history-title.show{
+  opacity:1;
+  transform:translateY(0);
+}
+.history-track{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:16px;
+  background:linear-gradient(90deg,#e8f5e9,#fff);
+  border-radius:12px;
+  overflow-x:auto;
+  opacity:0;
+  transform:translateY(10px);
+  transition:all 0.4s ease;
+}
+.history-track.show{
+  opacity:1;
+  transform:translateY(0);
+}
+.history-item{
+  flex-shrink:0;
+  padding:10px 16px;
+  background:#fff;
+  border:2px solid var(--green-light);
+  border-radius:10px;
+  font-size:13px;
+  font-weight:500;
+  color:var(--green-main);
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+.history-arrow{
+  color:#9e9e9e;
+  font-size:18px;
+}
+.insight-box{
+  margin-top:20px;
+  padding:16px 20px;
+  background:linear-gradient(135deg,#fff3e0,#ffe0b2);
+  border-radius:12px;
+  border-left:4px solid #ff9800;
+  display:none;
+  opacity:0;
+  transform:translateY(10px);
+  transition:all 0.4s ease;
+}
+.insight-box.show{
+  opacity:1;
+  transform:translateY(0);
+}
+.insight-title{
+  font-weight:600;
+  color:#e65100;
+  margin-bottom:8px;
+  font-size:14px;
+}
+.insight-content{
+  font-size:14px;
+  color:#4e342e;
+  line-height:1.6;
+}
+.recommend-section{
+  margin-top:24px;
+  display:none;
+}
+.recommend-section.show{
+  display:block;
+}
+.recommend-title{
+  font-weight:600;
+  color:var(--green-main);
+  margin-bottom:16px;
+  font-size:15px;
+}
+.recommend-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:18px;
+}
+.recommend-card{
+  background:#fff;
+  border-radius:14px;
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+  padding:18px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  position:relative;
+  overflow:hidden;
+  opacity:0;
+  transform:translateY(20px);
+  transition:all 0.4s ease;
+  border:1px solid #e5e7eb;
+}
+.recommend-card.show{
+  opacity:1;
+  transform:translateY(0);
+}
+.recommend-card::before{
+  content:'';
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:4px;
+  background:linear-gradient(90deg,var(--green-main),var(--green-accent));
+}
+.recommend-card h4{
+  margin:0;
+  font-size:16px;
+  color:#2e7d32;
+}
+.recommend-card .author{
+  font-size:13px;
+  color:#6b7280;
+}
+.recommend-card .reason{
+  font-size:13px;
+  line-height:1.6;
+  color:#374151;
+  padding:10px 12px;
+  background:#f9fafb;
+  border-radius:8px;
+  border-left:3px solid var(--green-accent);
+}
+.recommend-card .reason-label{
+  font-size:11px;
+  color:var(--green-main);
+  font-weight:600;
+  margin-bottom:4px;
+}
+.recommend-card .card-actions{
+  margin-top:auto;
+  display:flex;
+  gap:8px;
+}
+.recommend-card .card-actions button{
+  flex:1;
+  border:none;
+  border-radius:8px;
+  padding:10px;
+  cursor:pointer;
+  font-size:13px;
+  transition:all 0.2s;
+}
+.recommend-card .card-actions .primary{
+  background:var(--green-main);
+  color:#fff;
+}
+.recommend-card .card-actions .primary:hover{
+  background:#1b5e20;
+}
+.recommend-card .card-actions .secondary{
+  background:var(--green-light);
+  color:var(--green-main);
+}
+.recommend-card .card-actions .secondary:hover{
+  background:#c8e6c9;
+}
+.msg.system{
+  justify-content:center;
+}
+.msg.system .bubble{
+  background:#e3f2fd;
+  color:#1976d2;
+  border-radius:12px;
+  font-size:13px;
+  max-width:100%;
+  padding:10px 16px;
+}
+.compare-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:16px;
+}
+.compare-header h3{
+  margin:0;
+  font-size:16px;
+  color:var(--green-main);
+}
+.compare-header .clear-btn{
+  background:none;
+  border:none;
+  color:#6b7280;
+  font-size:13px;
+  cursor:pointer;
+  text-decoration:underline;
+}
+.compare-header .clear-btn:hover{
+  color:var(--green-main);
+}
+.compare-slots{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.compare-slot{
+  flex:1;
+  min-width:140px;
+  border:2px dashed #d1d5db;
+  border-radius:12px;
+  padding:16px;
+  min-height:90px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all 0.2s;
+  background:#fff;
+}
+.compare-slot.drag-over{
+  border-color:var(--green-main);
+  background:var(--green-light);
+}
+.compare-slot.filled{
+  border-style:solid;
+  border-color:var(--green-accent);
+  background:#fff;
+  flex-direction:column;
+  gap:8px;
+  padding:12px;
+}
+.compare-slot .placeholder{
+  color:#9ca3af;
+  font-size:13px;
+  text-align:center;
+}
+.compare-slot .slot-book-info{
+  text-align:center;
+  flex:1;
+}
+.compare-slot .slot-book-info h5{
+  margin:0 0 4px 0;
+  font-size:14px;
+  color:var(--green-main);
+}
+.compare-slot .slot-book-info span{
+  font-size:12px;
+  color:#6b7280;
+}
+.compare-slot .remove-btn{
+  background:#fee2e2;
+  border:none;
+  color:#ef4444;
+  font-size:12px;
+  cursor:pointer;
+  padding:4px 10px;
+  border-radius:6px;
+}
+.compare-slot .remove-btn:hover{
+  background:#fecaca;
+}
+.compare-vs{
+  font-weight:700;
+  color:var(--green-main);
+  font-size:18px;
+  flex-shrink:0;
+}
+.compare-actions{
+  margin-top:16px;
+  display:flex;
+  gap:12px;
+}
+.compare-actions button{
+  flex:1;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.compare-actions button.primary{
+  background:var(--green-main);
+  color:#fff;
+}
+.compare-actions button.primary:hover{
+  background:#1b5e20;
+}
+.compare-actions button:disabled{
+  background:#d1d5db;
+  color:#9ca3af;
+  cursor:not-allowed;
+}
+.compare-hint{
+  margin-top:12px;
+  font-size:12px;
+  color:#6b7280;
+  text-align:center;
+}
+
+.input-area{
+  border-top:1px solid #e5e7eb;
+  padding:14px;
+  display:flex;
+  gap:10px;
+  flex-shrink:0;
+}
+.input-area input{
+  flex:1;
+  padding:12px 14px;
+  border-radius:10px;
+  border:1px solid #d1d5db;
+  font-size:14px;
+}
+.input-area input:focus{
+  outline:none;
+  border-color:var(--green-main);
+}
+.input-area button{
+  background:var(--green-main);
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  padding:0 18px;
+  cursor:pointer;
+  font-size:14px;
+  transition:background 0.2s;
+}
+.input-area button:hover{
+  background:#1b5e20;
+}
+.input-area button:disabled{
+  background:#9e9e9e;
+  cursor:not-allowed;
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+  .compare-slots{
+    flex-direction:column;
+  }
+  .compare-slot{
+    width:100%;
+  }
+  .compare-vs{
+    margin:8px 0;
+  }
+}
+</style>
+</head>
+<body>
+
+<header>📗 博客來｜智慧書籍顧問（展示版）</header>
+
+<div class="container">
+  <div class="chat-panel">
+    <div class="chat-area" id="chatArea">
+      <div class="welcome" id="welcome">
+        <h2>歡迎使用智慧書籍顧問</h2>
+        <p>試試問我：「底層邏輯這本書在講什麼？」</p>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="請輸入你想了解的書籍..." />
+      <button id="sendBtn" onclick="handleSend()">送出</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const chatArea = document.getElementById('chatArea');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const welcome = document.getElementById('welcome');
+
+// Compare state
+let slot1Book = null;
+let slot2Book = null;
+
+const agentResponse1 = `《底層邏輯》強調「萬變中的不變」，幫助讀者在複雜世界中，掌握事物真正不變的規律。
+
+作者提出公式：方法論 = 底層邏輯 × 環境變數
+
+書中從五個面向切入：
+• 是非對錯的判斷
+• 思考問題的方式
+• 個體如何持續進化
+• 如何理解他人
+• 社會與組織的運作邏輯
+
+目標是幫助讀者在資訊爆炸的時代，不被表象迷惑，而是用穩定的邏輯做決策。`;
+
+const agentResponse2 = `如果你對這類「理解世界運作規律」的書有興趣，我可以幫你找幾本內容脈絡相近、但切角不同的書：`;
+
+// Browsing history recommendation responses
+const historySystemMsg = '🔍 Agent 正在分析您的閱讀軌跡...';
+const historyAgentResponse = `我注意到你剛才看了《底層邏輯》和《刻意練習》，
+
+這兩本都在談「如何系統性提升自己」——一本從思維切入，一本從行為切入。
+
+要不要看看其他從不同角度切入自我成長的書？`;
+const insightText = `您對「自我提升」主題有高度興趣，偏好有理論架構且可實際應用的書籍。以下推薦都符合這個閱讀偏好，但各自從不同面向切入。`;
+
+const historyRecommendHTML = `
+<div class="history-section" id="historySection">
+  <div class="history-title" id="historyTitle">📖 您的閱讀軌跡</div>
+  <div class="history-track" id="historyTrack">
+    <div class="history-item">底層邏輯</div>
+    <div class="history-arrow">→</div>
+    <div class="history-item">刻意練習</div>
+    <div class="history-arrow">→</div>
+    <div class="history-item" style="border-color:var(--green-accent);background:var(--green-light);">? 下一本</div>
+  </div>
+</div>
+
+<div class="insight-box" id="insightBox">
+  <div class="insight-title">🧠 Agent 洞察</div>
+  <div class="insight-content" id="insightContent"></div>
+</div>
+
+<div class="recommend-section" id="recommendSection">
+  <div class="recommend-title">📚 為你精選的延伸閱讀</div>
+  <div class="recommend-grid">
+    <div class="recommend-card" id="rec1">
+      <h4>原子習慣</h4>
+      <div class="author">James Clear</div>
+      <div class="reason">
+        <div class="reason-label">為什麼推薦給你</div>
+        結合《底層邏輯》的系統思維與《刻意練習》的行為改變，教你用微小習慣累積巨大改變。是兩本書的「實踐版」。
+      </div>
+      <div class="card-actions">
+        <button class="primary">加入購物車</button>
+        <button class="secondary">加入收藏</button>
+      </div>
+    </div>
+
+    <div class="recommend-card" id="rec2">
+      <h4>高效能人士的七個習慣</h4>
+      <div class="author">Stephen Covey</div>
+      <div class="reason">
+        <div class="reason-label">為什麼推薦給你</div>
+        從「原則」出發建立生活系統，與《底層邏輯》的「找規律」思維一脈相承，但更聚焦在人際與領導力。
+      </div>
+      <div class="card-actions">
+        <button class="primary">加入購物車</button>
+        <button class="secondary">加入收藏</button>
+      </div>
+    </div>
+
+    <div class="recommend-card" id="rec3">
+      <h4>心態致勝</h4>
+      <div class="author">Carol Dweck</div>
+      <div class="reason">
+        <div class="reason-label">為什麼推薦給你</div>
+        《刻意練習》說「怎麼練」，這本說「用什麼心態練」。成長心態 vs 定型心態的經典研究，補足心理層面。
+      </div>
+      <div class="card-actions">
+        <button class="primary">加入購物車</button>
+        <button class="secondary">加入收藏</button>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+let questionCount = 0;
+
+const bookSectionHTML = `
+<div class="book-section" id="bookSection">
+  <div class="book-title">📚 相似概念書籍推薦</div>
+  <div class="book-grid">
+    <div class="book-card" id="book1" draggable="true" ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)" data-book="刻意練習" data-author="Anders Ericsson">
+      <h4>刻意練習</h4>
+      <div class="author">Anders Ericsson</div>
+      <div class="desc">從專家養成的角度，揭示成長背後可被複製的底層規律，強調系統化訓練而非天賦。</div>
+      <div class="book-actions">
+        <button onclick="addToCompare(event, '刻意練習', 'Anders Ericsson')">加入比較</button>
+      </div>
+    </div>
+    <div class="book-card" id="book2" draggable="true" ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)" data-book="思考，快與慢" data-author="Daniel Kahneman">
+      <h4>思考，快與慢</h4>
+      <div class="author">Daniel Kahneman</div>
+      <div class="desc">從心理學切入，解析人類判斷與決策的底層機制，說明我們為何經常在思考時犯錯。</div>
+      <div class="book-actions">
+        <button onclick="addToCompare(event, '思考，快與慢', 'Daniel Kahneman')">加入比較</button>
+      </div>
+    </div>
+    <div class="book-card" id="book3" draggable="true" ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)" data-book="系統之美" data-author="Donella H. Meadows">
+      <h4>系統之美</h4>
+      <div class="author">Donella H. Meadows</div>
+      <div class="desc">以系統思考的方式，幫助讀者理解複雜世界中，看不見卻深刻影響結果的結構。</div>
+      <div class="book-actions">
+        <button onclick="addToCompare(event, '系統之美', 'Donella H. Meadows')">加入比較</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inline Compare Section -->
+  <div class="compare-section" id="compareSection">
+    <div class="compare-header">
+      <h3>⚖️ 書籍比較</h3>
+      <button class="clear-btn" onclick="clearCompare()">清除全部</button>
+    </div>
+    <div class="compare-slots">
+      <div class="compare-slot" id="slot1" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 1)">
+        <span class="placeholder">拖曳或點擊加入書籍</span>
+      </div>
+      <div class="compare-vs">VS</div>
+      <div class="compare-slot" id="slot2" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 2)">
+        <span class="placeholder">拖曳或點擊加入書籍</span>
+      </div>
+    </div>
+    <div class="compare-actions">
+      <button class="primary" id="compareBtn" onclick="goToCompare()" disabled>開始比較</button>
+    </div>
+    <div class="compare-hint">💡 點擊書籍卡片的「加入比較」或直接拖曳書籍到上方</div>
+  </div>
+</div>`;
+
+let isProcessing = false;
+
+userInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter' && !isProcessing) handleSend();
+});
+
+function handleSend() {
+  const text = userInput.value.trim();
+  if (!text || isProcessing) return;
+
+  isProcessing = true;
+  sendBtn.disabled = true;
+
+  if (welcome) welcome.style.display = 'none';
+
+  addMessage(text, 'user');
+  userInput.value = '';
+
+  questionCount++;
+
+  // Check if it's a recommendation follow-up question
+  const isRecommendQuestion = text.includes('推薦') || text.includes('還有') || text.includes('其他') || text.includes('更多');
+
+  if (questionCount === 1) {
+    // First question - show book introduction
+    setTimeout(() => {
+      streamMessage(agentResponse1, () => {
+        setTimeout(() => {
+          streamMessage(agentResponse2, () => {
+            showBooks();
+          });
+        }, 500);
+      });
+    }, 600);
+  } else if (isRecommendQuestion) {
+    // Follow-up recommendation question - show browsing history flow
+    setTimeout(() => {
+      showHistoryRecommendation();
+    }, 600);
+  } else {
+    // Default response
+    setTimeout(() => {
+      streamMessage('好的，讓我為您查詢相關資訊...', () => {
+        isProcessing = false;
+        sendBtn.disabled = false;
+      });
+    }, 600);
+  }
+}
+
+function addMessage(text, type) {
+  const msg = document.createElement('div');
+  msg.className = `msg ${type}`;
+  msg.innerHTML = `<div class="bubble">${text.replace(/\n/g, '<br>')}</div>`;
+  chatArea.appendChild(msg);
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function streamMessage(text, callback) {
+  const msg = document.createElement('div');
+  msg.className = 'msg agent';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  msg.appendChild(bubble);
+  chatArea.appendChild(msg);
+
+  let index = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'typing-cursor';
+
+  function type() {
+    if (index < text.length) {
+      const char = text[index];
+      if (char === '\n') {
+        bubble.innerHTML = bubble.innerHTML.replace(/<span class="typing-cursor"><\/span>$/, '');
+        bubble.innerHTML += '<br>';
+      } else {
+        bubble.innerHTML = bubble.innerHTML.replace(/<span class="typing-cursor"><\/span>$/, '');
+        bubble.innerHTML += char;
+      }
+      bubble.appendChild(cursor);
+      index++;
+      chatArea.scrollTop = chatArea.scrollHeight;
+
+      const delay = char === '。' || char === '，' || char === '：' ? 80 :
+                    char === '\n' ? 150 :
+                    Math.random() * 20 + 15;
+      setTimeout(type, delay);
+    } else {
+      cursor.remove();
+      if (callback) callback();
+    }
+  }
+
+  bubble.appendChild(cursor);
+  setTimeout(type, 300);
+}
+
+function showBooks() {
+  chatArea.insertAdjacentHTML('beforeend', bookSectionHTML);
+
+  const bookSection = document.getElementById('bookSection');
+  bookSection.style.display = 'block';
+
+  setTimeout(() => {
+    document.getElementById('book1').classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 100);
+  setTimeout(() => {
+    document.getElementById('book2').classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 250);
+  setTimeout(() => {
+    document.getElementById('book3').classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 400);
+
+  setTimeout(() => {
+    isProcessing = false;
+    sendBtn.disabled = false;
+  }, 500);
+}
+
+// Compare Functions
+function addToCompare(event, book, author) {
+  event.stopPropagation();
+  const data = { book, author };
+
+  // Check if already added
+  if ((slot1Book && slot1Book.book === book) || (slot2Book && slot2Book.book === book)) {
+    return;
+  }
+
+  // Show compare section
+  const compareSection = document.getElementById('compareSection');
+  compareSection.classList.add('show');
+
+  // Add to first empty slot
+  if (!slot1Book) {
+    slot1Book = data;
+    updateSlot(document.getElementById('slot1'), data, 1);
+  } else if (!slot2Book) {
+    slot2Book = data;
+    updateSlot(document.getElementById('slot2'), data, 2);
+  }
+
+  updateBookCardStates();
+  updateCompareButton();
+
+  // Scroll to compare section
+  setTimeout(() => {
+    compareSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 100);
+}
+
+function clearCompare() {
+  slot1Book = null;
+  slot2Book = null;
+
+  const slot1 = document.getElementById('slot1');
+  const slot2 = document.getElementById('slot2');
+
+  slot1.classList.remove('filled');
+  slot1.innerHTML = '<span class="placeholder">拖曳或點擊加入書籍</span>';
+
+  slot2.classList.remove('filled');
+  slot2.innerHTML = '<span class="placeholder">拖曳或點擊加入書籍</span>';
+
+  updateBookCardStates();
+  updateCompareButton();
+}
+
+// Drag Functions
+function handleDragStart(event) {
+  const card = event.target.closest('.book-card');
+  if (!card) return;
+
+  card.classList.add('dragging');
+  event.dataTransfer.setData('text/plain', JSON.stringify({
+    book: card.dataset.book,
+    author: card.dataset.author
+  }));
+  event.dataTransfer.effectAllowed = 'copy';
+
+  // Show compare section
+  const compareSection = document.getElementById('compareSection');
+  if (compareSection) {
+    compareSection.classList.add('show');
+  }
+}
+
+function handleDragEnd(event) {
+  const card = event.target.closest('.book-card');
+  if (card) card.classList.remove('dragging');
+}
+
+function handleDragOver(event) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'copy';
+  const slot = event.target.closest('.compare-slot');
+  if (slot) slot.classList.add('drag-over');
+}
+
+function handleDragLeave(event) {
+  const slot = event.target.closest('.compare-slot');
+  if (slot) slot.classList.remove('drag-over');
+}
+
+function handleDrop(event, slotNum) {
+  event.preventDefault();
+  const slot = event.target.closest('.compare-slot');
+  if (slot) slot.classList.remove('drag-over');
+
+  try {
+    const data = JSON.parse(event.dataTransfer.getData('text/plain'));
+
+    // Check if same book already in other slot
+    if (slotNum === 1 && slot2Book && slot2Book.book === data.book) return;
+    if (slotNum === 2 && slot1Book && slot1Book.book === data.book) return;
+
+    if (slotNum === 1) {
+      slot1Book = data;
+    } else {
+      slot2Book = data;
+    }
+
+    updateSlot(slot, data, slotNum);
+    updateBookCardStates();
+    updateCompareButton();
+  } catch (e) {
+    console.error('Drop error:', e);
+  }
+}
+
+function updateSlot(slot, data, slotNum) {
+  slot.classList.add('filled');
+  slot.innerHTML = `
+    <div class="slot-book-info">
+      <h5>${data.book}</h5>
+      <span>${data.author}</span>
+    </div>
+    <button class="remove-btn" onclick="removeFromSlot(${slotNum})">移除</button>
+  `;
+}
+
+function removeFromSlot(slotNum) {
+  const slot = document.getElementById('slot' + slotNum);
+  if (slotNum === 1) {
+    slot1Book = null;
+  } else {
+    slot2Book = null;
+  }
+  slot.classList.remove('filled');
+  slot.innerHTML = '<span class="placeholder">拖曳或點擊加入書籍</span>';
+  updateBookCardStates();
+  updateCompareButton();
+}
+
+function updateBookCardStates() {
+  document.querySelectorAll('.book-card').forEach(card => {
+    const bookName = card.dataset.book;
+    const btn = card.querySelector('.book-actions button');
+    const isSelected = (slot1Book && slot1Book.book === bookName) || (slot2Book && slot2Book.book === bookName);
+
+    if (isSelected) {
+      card.classList.add('selected');
+      btn.classList.add('added');
+      btn.textContent = '已加入';
+    } else {
+      card.classList.remove('selected');
+      btn.classList.remove('added');
+      btn.textContent = '加入比較';
+    }
+  });
+}
+
+function updateCompareButton() {
+  const compareBtn = document.getElementById('compareBtn');
+  if (compareBtn) {
+    compareBtn.disabled = !(slot1Book && slot2Book);
+  }
+}
+
+function goToCompare() {
+  if (slot1Book && slot2Book) {
+    showCompareResult();
+  }
+}
+
+function showCompareResult() {
+  // Hide compare section
+  const compareSection = document.getElementById('compareSection');
+  compareSection.style.display = 'none';
+
+  const compareResultText = `這兩本書都在探討「如何讓自己變得更好」，但切入角度完全不同：
+
+《${slot1Book.book}》著重在思維框架——幫你建立看世界的方式，理解事物運作的本質規律。讀完後，你會更懂得「為什麼」。
+
+《${slot2Book.book}》著重在行為方法——告訴你如何透過系統化訓練，把任何技能練到專家等級。讀完後，你會更懂得「怎麼做」。
+
+簡單說：一本教你思考，一本教你行動。`;
+
+  const compareResultHTML = `
+  <div class="compare-result" id="compareResult">
+    <div class="result-bubble" id="resultBubble"></div>
+    <div class="result-table-section" id="resultTableSection">
+      <div class="result-table-title">⚖️ 詳細比較表</div>
+      <table class="result-table">
+        <tr>
+          <th>比較面向</th>
+          <th>《${slot1Book.book}》</th>
+          <th>《${slot2Book.book}》</th>
+        </tr>
+        <tr>
+          <td>核心主題</td>
+          <td>萬變中的不變——找出事物的本質規律</td>
+          <td>專家是如何煉成的——系統化技能養成</td>
+        </tr>
+        <tr>
+          <td>作者背景</td>
+          <td>劉潤（商業顧問）</td>
+          <td>Anders Ericsson（心理學家）</td>
+        </tr>
+        <tr>
+          <td>閱讀難度</td>
+          <td>中等（概念較抽象）</td>
+          <td>中等（案例豐富易讀）</td>
+        </tr>
+        <tr>
+          <td>實用程度</td>
+          <td>培養思維，長期受益</td>
+          <td>可立即應用於技能學習</td>
+        </tr>
+        <tr>
+          <td>適合對象</td>
+          <td>想提升決策與判斷力的人</td>
+          <td>想快速精通特定技能的人</td>
+        </tr>
+        <tr>
+          <td>閱讀時間</td>
+          <td>約 4-5 小時</td>
+          <td>約 5-6 小時</td>
+        </tr>
+      </table>
+    </div>
+  </div>`;
+
+  // Insert result after book section
+  const bookSection = document.getElementById('bookSection');
+  bookSection.insertAdjacentHTML('beforeend', compareResultHTML);
+
+  const compareResult = document.getElementById('compareResult');
+  compareResult.classList.add('show');
+
+  // Stream the comparison text
+  streamCompareResult(compareResultText, () => {
+    // Show table after text is done
+    setTimeout(() => {
+      document.getElementById('resultTableSection').classList.add('show');
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }, 300);
+  });
+
+  // Scroll to result
+  setTimeout(() => {
+    compareResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
+function streamCompareResult(text, callback) {
+  const bubble = document.getElementById('resultBubble');
+  let index = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'typing-cursor';
+
+  function type() {
+    if (index < text.length) {
+      const char = text[index];
+      if (char === '\n') {
+        bubble.innerHTML = bubble.innerHTML.replace(/<span class="typing-cursor"><\/span>$/, '');
+        bubble.innerHTML += '<br>';
+      } else {
+        bubble.innerHTML = bubble.innerHTML.replace(/<span class="typing-cursor"><\/span>$/, '');
+        bubble.innerHTML += char;
+      }
+      bubble.appendChild(cursor);
+      index++;
+      chatArea.scrollTop = chatArea.scrollHeight;
+
+      const delay = char === '。' || char === '，' || char === '：' || char === '？' ? 80 :
+                    char === '\n' ? 150 :
+                    Math.random() * 20 + 15;
+      setTimeout(type, delay);
+    } else {
+      cursor.remove();
+      if (callback) callback();
+    }
+  }
+
+  bubble.appendChild(cursor);
+  setTimeout(type, 300);
+}
+
+// Browsing History Recommendation Functions
+function showHistoryRecommendation() {
+  // Show system message first
+  addMessage(historySystemMsg, 'system');
+
+  setTimeout(() => {
+    streamMessage(historyAgentResponse, () => {
+      // Insert history recommendation HTML
+      chatArea.insertAdjacentHTML('beforeend', historyRecommendHTML);
+
+      showHistorySection();
+    });
+  }, 800);
+}
+
+function showHistorySection() {
+  const historySection = document.getElementById('historySection');
+  historySection.classList.add('show');
+
+  setTimeout(() => {
+    document.getElementById('historyTitle').classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 100);
+
+  setTimeout(() => {
+    document.getElementById('historyTrack').classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 300);
+
+  setTimeout(() => {
+    showInsightBox();
+  }, 600);
+}
+
+function showInsightBox() {
+  const insightBox = document.getElementById('insightBox');
+  insightBox.style.display = 'block';
+
+  setTimeout(() => {
+    insightBox.classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+    streamInsightText();
+  }, 100);
+}
+
+function streamInsightText() {
+  const insightContent = document.getElementById('insightContent');
+  let index = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'typing-cursor';
+  cursor.style.background = '#e65100';
+
+  function type() {
+    if (index < insightText.length) {
+      const char = insightText[index];
+      if (char === '\n') {
+        insightContent.innerHTML = insightContent.innerHTML.replace(/<span class="typing-cursor"[^>]*><\/span>$/, '');
+        insightContent.innerHTML += '<br>';
+      } else {
+        insightContent.innerHTML = insightContent.innerHTML.replace(/<span class="typing-cursor"[^>]*><\/span>$/, '');
+        insightContent.innerHTML += char;
+      }
+      insightContent.appendChild(cursor);
+      index++;
+      chatArea.scrollTop = chatArea.scrollHeight;
+
+      const delay = char === '。' || char === '，' ? 50 :
+                    Math.random() * 15 + 10;
+      setTimeout(type, delay);
+    } else {
+      cursor.remove();
+      showRecommendCards();
+    }
+  }
+
+  insightContent.appendChild(cursor);
+  setTimeout(type, 200);
+}
+
+function showRecommendCards() {
+  const recommendSection = document.getElementById('recommendSection');
+  recommendSection.classList.add('show');
+
+  setTimeout(() => {
+    document.getElementById('rec1').classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 200);
+  setTimeout(() => {
+    document.getElementById('rec2').classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 400);
+  setTimeout(() => {
+    document.getElementById('rec3').classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 600);
+
+  setTimeout(() => {
+    isProcessing = false;
+    sendBtn.disabled = false;
+  }, 800);
+}
+</script>
+
+</body>
+</html>

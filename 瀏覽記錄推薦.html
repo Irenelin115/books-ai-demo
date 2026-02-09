@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<title>博客來｜智慧書籍顧問 Agent Demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+:root{
+  --green-main:#2E7D32;
+  --green-light:#E8F5E9;
+  --green-accent:#43A047;
+  --blue-light:#e3f2fd;
+  --blue-main:#1976d2;
+  --orange-light:#fff3e0;
+  --orange-main:#ff9800;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;
+  background:linear-gradient(180deg,#eaf6ee,#f7f9fa);
+}
+header{
+  background:var(--green-main);
+  color:#fff;
+  padding:18px;
+  text-align:center;
+  font-size:18px;
+  font-weight:600;
+}
+.container{
+  max-width:1200px;
+  margin:24px auto;
+  padding:0 20px;
+}
+.chat-panel{
+  background:#fff;
+  border-radius:16px;
+  box-shadow:0 8px 24px rgba(0,0,0,.1);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  height:85vh;
+}
+.chat-area{
+  flex:1;
+  padding:24px;
+  overflow-y:auto;
+}
+.welcome{
+  text-align:center;
+  padding:60px 20px;
+  color:#6b7280;
+}
+.welcome h2{
+  color:var(--green-main);
+  margin-bottom:12px;
+}
+.msg{
+  margin-bottom:18px;
+  display:flex;
+  opacity:0;
+  transform:translateY(10px);
+  animation:fadeIn 0.3s ease forwards;
+}
+@keyframes fadeIn{
+  to{opacity:1;transform:translateY(0)}
+}
+.msg.user{justify-content:flex-end}
+.msg.system{justify-content:center}
+.bubble{
+  max-width:85%;
+  padding:14px 18px;
+  border-radius:16px;
+  line-height:1.8;
+  font-size:14px;
+}
+.msg.user .bubble{
+  background:var(--green-accent);
+  color:#fff;
+  border-radius:16px 16px 4px 16px;
+}
+.msg.agent .bubble{
+  background:var(--green-light);
+  color:#1b5e20;
+  border-radius:16px 16px 16px 4px;
+}
+.msg.system .bubble{
+  background:var(--blue-light);
+  color:var(--blue-main);
+  border-radius:12px;
+  font-size:13px;
+  max-width:100%;
+  padding:10px 16px;
+}
+.typing-cursor{
+  display:inline-block;
+  width:2px;
+  height:1em;
+  background:var(--green-main);
+  margin-left:2px;
+  animation:blink 0.7s infinite;
+  vertical-align:text-bottom;
+}
+@keyframes blink{
+  0%,50%{opacity:1}
+  51%,100%{opacity:0}
+}
+.history-section{
+  padding:20px 0;
+  display:none;
+}
+.section-title{
+  font-weight:600;
+  color:var(--green-main);
+  margin-bottom:12px;
+  font-size:15px;
+  opacity:0;
+  transform:translateY(10px);
+  transition:all 0.4s ease;
+}
+.section-title.show{
+  opacity:1;
+  transform:translateY(0);
+}
+.history-track{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:16px;
+  background:linear-gradient(90deg,#e8f5e9,#fff);
+  border-radius:12px;
+  overflow-x:auto;
+  opacity:0;
+  transform:translateY(10px);
+  transition:all 0.4s ease;
+}
+.history-track.show{
+  opacity:1;
+  transform:translateY(0);
+}
+.history-item{
+  flex-shrink:0;
+  padding:10px 16px;
+  background:#fff;
+  border:2px solid var(--green-light);
+  border-radius:10px;
+  font-size:13px;
+  font-weight:500;
+  color:var(--green-main);
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+.history-arrow{
+  color:#9e9e9e;
+  font-size:18px;
+}
+.insight-box{
+  margin:20px 0;
+  padding:16px 20px;
+  background:linear-gradient(135deg,var(--orange-light),#ffe0b2);
+  border-radius:12px;
+  border-left:4px solid var(--orange-main);
+  display:none;
+  opacity:0;
+  transform:translateY(10px);
+  transition:all 0.4s ease;
+}
+.insight-box.show{
+  opacity:1;
+  transform:translateY(0);
+}
+.insight-title{
+  font-weight:600;
+  color:#e65100;
+  margin-bottom:8px;
+  font-size:14px;
+}
+.insight-content{
+  font-size:14px;
+  color:#4e342e;
+  line-height:1.6;
+}
+.book-section{
+  padding:20px 0;
+  display:none;
+}
+.book-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:18px;
+}
+.book-card{
+  background:#fff;
+  border-radius:14px;
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+  padding:18px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  position:relative;
+  overflow:hidden;
+  opacity:0;
+  transform:translateY(20px);
+  transition:all 0.4s ease;
+  border:1px solid #e5e7eb;
+}
+.book-card.show{
+  opacity:1;
+  transform:translateY(0);
+}
+.book-card::before{
+  content:'';
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:4px;
+  background:linear-gradient(90deg,var(--green-main),var(--green-accent));
+}
+.book-card h4{
+  margin:0;
+  font-size:16px;
+  color:#2e7d32;
+}
+.book-card .author{
+  font-size:13px;
+  color:#6b7280;
+}
+.book-card .reason{
+  font-size:13px;
+  line-height:1.6;
+  color:#374151;
+  padding:10px 12px;
+  background:#f9fafb;
+  border-radius:8px;
+  border-left:3px solid var(--green-accent);
+}
+.book-card .reason-label{
+  font-size:11px;
+  color:var(--green-main);
+  font-weight:600;
+  margin-bottom:4px;
+}
+.book-actions{
+  margin-top:auto;
+  display:flex;
+  gap:8px;
+}
+.book-actions button{
+  flex:1;
+  border:none;
+  border-radius:8px;
+  padding:10px;
+  cursor:pointer;
+  font-size:13px;
+  transition:all 0.2s;
+}
+.book-actions .primary{
+  background:var(--green-main);
+  color:#fff;
+}
+.book-actions .primary:hover{
+  background:#1b5e20;
+}
+.book-actions .secondary{
+  background:var(--green-light);
+  color:var(--green-main);
+}
+.book-actions .secondary:hover{
+  background:#c8e6c9;
+}
+.input-area{
+  border-top:1px solid #e5e7eb;
+  padding:14px;
+  display:flex;
+  gap:10px;
+  flex-shrink:0;
+}
+.input-area input{
+  flex:1;
+  padding:12px 14px;
+  border-radius:10px;
+  border:1px solid #d1d5db;
+  font-size:14px;
+}
+.input-area input:focus{
+  outline:none;
+  border-color:var(--green-main);
+}
+.input-area button{
+  background:var(--green-main);
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  padding:0 18px;
+  cursor:pointer;
+  font-size:14px;
+  transition:background 0.2s;
+}
+.input-area button:hover{
+  background:#1b5e20;
+}
+.input-area button:disabled{
+  background:#9e9e9e;
+  cursor:not-allowed;
+}
+</style>
+</head>
+<body>
+
+<header>📗 博客來｜智慧書籍顧問（個人化推薦展示）</header>
+
+<div class="container">
+  <div class="chat-panel">
+    <div class="chat-area" id="chatArea">
+      <div class="welcome" id="welcome">
+        <h2>個人化推薦助手</h2>
+        <p>試試輸入：「還有什麼推薦的嗎？」或「根據我看過的書推薦」</p>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="想找其他主題的書嗎？例如：有沒有關於投資理財的？" />
+      <button id="sendBtn" onclick="handleSend()">送出</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const chatArea = document.getElementById('chatArea');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const welcome = document.getElementById('welcome');
+
+const systemMsg = '🔍 Agent 正在分析您的閱讀軌跡...';
+
+const agentResponse = `我注意到你剛才看了《底層邏輯》和《刻意練習》，
+
+這兩本都在談「如何系統性提升自己」——一本從思維切入，一本從行為切入。
+
+要不要看看其他從不同角度切入自我成長的書？`;
+
+const insightText = `您對「自我提升」主題有高度興趣，偏好有理論架構且可實際應用的書籍。以下推薦都符合這個閱讀偏好，但各自從不同面向切入。`;
+
+const contentHTML = `
+<div class="history-section" id="historySection">
+  <div class="section-title" id="historyTitle">📖 您的閱讀軌跡</div>
+  <div class="history-track" id="historyTrack">
+    <div class="history-item">底層邏輯</div>
+    <div class="history-arrow">→</div>
+    <div class="history-item">刻意練習</div>
+    <div class="history-arrow">→</div>
+    <div class="history-item" style="border-color:var(--green-accent);background:var(--green-light);">? 下一本</div>
+  </div>
+</div>
+
+<div class="insight-box" id="insightBox">
+  <div class="insight-title">🧠 Agent 洞察</div>
+  <div class="insight-content" id="insightContent"></div>
+</div>
+
+<div class="book-section" id="bookSection">
+  <div class="section-title show">📚 為你精選的延伸閱讀</div>
+  <div class="book-grid">
+    <div class="book-card" id="book1">
+      <h4>原子習慣</h4>
+      <div class="author">James Clear</div>
+      <div class="reason">
+        <div class="reason-label">為什麼推薦給你</div>
+        結合《底層邏輯》的系統思維與《刻意練習》的行為改變，教你用微小習慣累積巨大改變。是兩本書的「實踐版」。
+      </div>
+      <div class="book-actions">
+        <button class="primary">加入購物車</button>
+        <button class="secondary" onclick="location.href='A:B比較.html'">比較看看</button>
+      </div>
+    </div>
+
+    <div class="book-card" id="book2">
+      <h4>高效能人士的七個習慣</h4>
+      <div class="author">Stephen Covey</div>
+      <div class="reason">
+        <div class="reason-label">為什麼推薦給你</div>
+        從「原則」出發建立生活系統，與《底層邏輯》的「找規律」思維一脈相承，但更聚焦在人際與領導力。
+      </div>
+      <div class="book-actions">
+        <button class="primary">加入購物車</button>
+        <button class="secondary" onclick="location.href='A:B比較.html'">比較看看</button>
+      </div>
+    </div>
+
+    <div class="book-card" id="book3">
+      <h4>心態致勝</h4>
+      <div class="author">Carol Dweck</div>
+      <div class="reason">
+        <div class="reason-label">為什麼推薦給你</div>
+        《刻意練習》說「怎麼練」，這本說「用什麼心態練」。成長心態 vs 定型心態的經典研究，補足心理層面。
+      </div>
+      <div class="book-actions">
+        <button class="primary">加入購物車</button>
+        <button class="secondary" onclick="location.href='A:B比較.html'">比較看看</button>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+let isProcessing = false;
+
+userInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter' && !isProcessing) handleSend();
+});
+
+function handleSend() {
+  const text = userInput.value.trim();
+  if (!text || isProcessing) return;
+
+  isProcessing = true;
+  sendBtn.disabled = true;
+
+  if (welcome) welcome.style.display = 'none';
+
+  addMessage(text, 'user');
+  userInput.value = '';
+
+  setTimeout(() => {
+    addMessage(systemMsg, 'system');
+
+    setTimeout(() => {
+      streamMessage(agentResponse, () => {
+        showContent();
+      });
+    }, 1000);
+  }, 400);
+}
+
+function addMessage(text, type) {
+  const msg = document.createElement('div');
+  msg.className = `msg ${type}`;
+  msg.innerHTML = `<div class="bubble">${text.replace(/\n/g, '<br>')}</div>`;
+  chatArea.appendChild(msg);
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function streamMessage(text, callback) {
+  const msg = document.createElement('div');
+  msg.className = 'msg agent';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  msg.appendChild(bubble);
+  chatArea.appendChild(msg);
+
+  let index = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'typing-cursor';
+
+  function type() {
+    if (index < text.length) {
+      const char = text[index];
+      if (char === '\n') {
+        bubble.innerHTML = bubble.innerHTML.replace(/<span class="typing-cursor"><\/span>$/, '');
+        bubble.innerHTML += '<br>';
+      } else {
+        bubble.innerHTML = bubble.innerHTML.replace(/<span class="typing-cursor"><\/span>$/, '');
+        bubble.innerHTML += char;
+      }
+      bubble.appendChild(cursor);
+      index++;
+      chatArea.scrollTop = chatArea.scrollHeight;
+
+      const delay = char === '。' || char === '，' || char === '：' || char === '？' ? 80 :
+                    char === '\n' ? 150 :
+                    Math.random() * 20 + 15;
+      setTimeout(type, delay);
+    } else {
+      cursor.remove();
+      if (callback) callback();
+    }
+  }
+
+  bubble.appendChild(cursor);
+  setTimeout(type, 300);
+}
+
+function showContent() {
+  // Insert content into chat area
+  chatArea.insertAdjacentHTML('beforeend', contentHTML);
+
+  const historySection = document.getElementById('historySection');
+  historySection.style.display = 'block';
+
+  setTimeout(() => {
+    document.getElementById('historyTitle').classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 100);
+
+  setTimeout(() => {
+    document.getElementById('historyTrack').classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 300);
+
+  setTimeout(() => {
+    showInsight();
+  }, 600);
+}
+
+function showInsight() {
+  const insightBox = document.getElementById('insightBox');
+  insightBox.style.display = 'block';
+
+  setTimeout(() => {
+    insightBox.classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+    streamInsight();
+  }, 100);
+}
+
+function streamInsight() {
+  const insightContent = document.getElementById('insightContent');
+  let index = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'typing-cursor';
+  cursor.style.background = '#e65100';
+
+  function type() {
+    if (index < insightText.length) {
+      const char = insightText[index];
+      if (char === '\n') {
+        insightContent.innerHTML = insightContent.innerHTML.replace(/<span class="typing-cursor"[^>]*><\/span>$/, '');
+        insightContent.innerHTML += '<br>';
+      } else {
+        insightContent.innerHTML = insightContent.innerHTML.replace(/<span class="typing-cursor"[^>]*><\/span>$/, '');
+        insightContent.innerHTML += char;
+      }
+      insightContent.appendChild(cursor);
+      index++;
+      chatArea.scrollTop = chatArea.scrollHeight;
+
+      const delay = char === '。' || char === '，' ? 50 :
+                    Math.random() * 15 + 10;
+      setTimeout(type, delay);
+    } else {
+      cursor.remove();
+      showBooks();
+    }
+  }
+
+  insightContent.appendChild(cursor);
+  setTimeout(type, 200);
+}
+
+function showBooks() {
+  const bookSection = document.getElementById('bookSection');
+  bookSection.style.display = 'block';
+
+  setTimeout(() => {
+    document.getElementById('book1').classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 200);
+  setTimeout(() => {
+    document.getElementById('book2').classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 400);
+  setTimeout(() => {
+    document.getElementById('book3').classList.add('show');
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }, 600);
+
+  setTimeout(() => {
+    isProcessing = false;
+    sendBtn.disabled = false;
+  }, 800);
+}
+</script>
+
+</body>
+</html>
